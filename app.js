@@ -66,7 +66,7 @@ function saveUser() {
   user.updated_at = nowISO();
   try { localStorage.setItem(STORE_KEY, JSON.stringify(user)); } catch (e) {}
   updateTopStatus();
-  fetch('/api/user',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(user),keepalive:true}).catch(()=>{});
+  
 }
 
 function current() { return cards[order[idx]]; }
@@ -944,5 +944,5 @@ $('#pauseRefill').addEventListener('click',async()=>{
   finally{button.disabled=false;}
 });
 $('#generateBtn').addEventListener('click',()=>submitGeneration({kind:'feed'}));
-setInterval(pollJobs,3000);
-boot().then(pollJobs);
+
+boot();
