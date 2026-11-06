@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>拾知</title>
+<meta name="theme-color" content="#FAF8F4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="拾知">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="icon" type="image/png" href="assets/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<form id="unlock" class="panel" style="max-width:400px;margin:24px auto"><h1>拾知</h1><label>阅读密码<input name="password" type="password" required></label><button class="btn-blue">解锁卡片</button><p id="unlockStatus" role="status"></p></form><div id="app" hidden>
+
+  <header class="topbar">
+    <div class="brand">拾知<span class="brand-mark"></span></div>
+    <div class="top-status" id="topStatus">载入中</div>
+  </header>
+
+  <main id="stage">
+
+    <section class="view view-feed is-active" id="view-feed">
+      <div style="padding:4px 16px"><button class="btn-blue" id="generateBtn">补充 10 张</button> <span id="generationStatus" role="status" style="font-size:12px">库存不足时电脑自动补充</span></div>
+      <button class="btn-outline" id="pauseRefill" aria-pressed="false">暂停补充</button>
+      <div class="feed-scroll" id="feedScroll">
+        <div class="feed-progress">
+          <span id="feedPos">—</span>
+          <span class="feed-progress-hint">读完再上滑 · 已看收入历史</span>
+        </div>
+        <article class="card" id="card"></article>
+        <div class="feed-end" id="feedEnd"></div>
+      </div>
+      <div class="actionbar">
+        <button class="act act-ghost" data-act="prev" aria-label="上一张">
+          <span class="act-ico">↑</span><span>上一张</span>
+        </button>
+        <button class="act" data-act="fav" id="favBtn" aria-label="收藏">
+          <span class="act-ico" id="favIco">＋</span><span id="favLabel">收藏</span>
+        </button>
+        <button class="act" data-act="deep" aria-label="深度阅读">
+          <span class="act-ico">≡</span><span>深读</span>
+        </button>
+        <button class="act act-primary" data-act="next" aria-label="下一张">
+          <span>下一张</span><span class="act-ico">↓</span>
+        </button>
+      </div>
+      <div class="subactions">
+        <button data-act="like" id="likeBtn">有意思</button>
+        <button data-act="skip">不感兴趣</button>
+        <a id="openOriginal" href="#" target="_blank" rel="noopener">打开原文 ↗</a>
+      </div>
+    </section>
+
+    <section class="view" id="view-favorites">
+      <div class="page-head">
+        <h1>收藏</h1>
+        <p class="page-sub" id="favCount">—</p>
+      </div>
+
+      <div class="search-row">
+        <input id="favSearch" type="search" placeholder="搜索标题、作者、标签" autocomplete="off" enterkeyhint="search">
+      </div>
+
+      <div class="filter-label">来源</div>
+      <div class="chip-scroll" id="favSources"></div>
+
+      <div class="filter-label">主题</div>
+      <div class="chip-scroll" id="favTags"></div>
+
+      <div class="sort-row">
+        <span class="sort-label">排序</span>
+        <select id="favSort" aria-label="排序方式">
+          <option value="fav_desc">最近收藏</option>
+          <option value="fav_asc">最早收藏</option>
+          <option value="pub_desc">发布时间（新→旧）</option>
+          <option value="round">轮次顺序</option>
+        </select>
+        <button id="favReset" class="link-btn">重置</button>
+      </div>
+
+      <div id="favList" class="simple-list"></div>
+    </section>
+
+    <section class="view" id="view-radar">
+      <div class="page-head">
+        <h1>项目雷达</h1>
+        <p class="page-sub">围绕指定项目的定向检索</p>
+      </div>
+
+      <div class="notice">独立入口，<strong>不改动</strong>全局「刷一刷」的推荐偏好。手机端先在已有卡片库中做本地匹配；需要新内容时，导出检索请求回生成器侧执行，结果导入后会自动出现在这里。</div>
+
+      <div class="panel">
+        <div class="panel-title">新建项目</div>
+        <label>项目主题<input id="projectTopic" placeholder="例如：AI 视频工具"></label>
+        <label>具体问题<input id="projectQuestion" placeholder="例如：有哪些真实交付案例"></label>
+        <button class="btn-blue" id="projectAdd" style="width:100%">保存项目</button>
+      </div>
+
+      <div id="projectList" class="simple-list"></div>
+    </section>
+
+    <section class="view" id="view-me">
+      <div class="page-head">
+        <h1>我的</h1>
+        <p class="page-sub">数据与同步</p>
+      </div>
+
+      <div class="stat-grid" id="statGrid"></div>
+
+      <div class="panel">
+        <div class="panel-title">兴趣偏好</div>
+        <div id="prefBox"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">数据同步</div>
+        <p class="panel-line" id="syncLine">—</p>
+        <p class="panel-line" id="exportLine">—</p>
+        <p class="panel-note">手机端只写本地记录，绝不回写生成器的 state.json。跨设备请用导出 / 导入 JSON。</p>
+        <div class="panel-actions">
+          <button class="btn-blue" id="exportBtn">导出备份</button>
+          <button class="btn-outline" id="importBtn">导入备份</button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">阅读历史</div>
+        <div id="readList" class="simple-list"></div>
+      </div>
+
+      <div class="panel danger-zone">
+        <div class="panel-title">清空本地记录</div>
+        <p class="panel-note">只清空这台设备上的收藏、反馈、项目与阅读记录；卡片数据和 state.json 不受影响。</p>
+        <button class="btn-outline danger" id="clearBtn">清空本机记录</button>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="overlay" id="reader" hidden>
+    <div class="reader-bar">
+      <span>深度阅读</span>
+      <button id="readerClose" aria-label="关闭">关闭</button>
+    </div>
+    <div class="reader-body" id="readerBody"></div>
+  </div>
+
+  <nav class="tabbar" aria-label="主导航">
+    <button class="tab is-active" data-view="feed">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h6"/></svg>
+      <span>刷一刷</span>
+    </button>
+    <button class="tab" data-view="favorites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"/></svg>
+      <span>收藏</span>
+    </button>
+    <button class="tab" data-view="radar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 12l5-5"/></svg>
+      <span>项目雷达</span>
+    </button>
+    <button class="tab" data-view="me">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
+      <span>我的</span>
+    </button>
+  </nav>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+<script type="module" src="unlock.js"></script>
+</body>
+</html>
