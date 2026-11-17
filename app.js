@@ -885,6 +885,10 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
 window.addEventListener('online', refreshFeed);
 setInterval(refreshFeed, 30000);
 let generationJobs = [];
+const publicReader=location.hostname==='xue8023.github.io';
+function openControl(intent){
+ location.assign('https://shizhi-feed-28459.effortlesscabin.chatgpt.site/control.html?'+new URLSearchParams({intent,request:crypto.randomUUID()}));
+}
 let submittingGeneration = false;
 const seenJobs = new Set();
 function jobHTML(projectId) {
@@ -898,6 +902,7 @@ function jobMessage(j) {
   return `${j.message} · ${Math.floor(seconds/60)}分${seconds%60}秒`;
 }
 async function pollJobs() {
+  if(publicReader)return;
   try {
     const r=await fetch('/api/jobs',{cache:'no-store'});
     if (!r.ok) return;
@@ -913,6 +918,7 @@ async function pollJobs() {
   } catch (_) { $('#generationStatus').textContent='本机服务暂不可达'; }
 }
 async function submitGeneration(data) {
+  if(publicReader&&data.kind==='feed'){openControl('refill');return;}
   if (submittingGeneration) return;
   submittingGeneration=true;
   try {
@@ -924,11 +930,13 @@ async function submitGeneration(data) {
   finally { submittingGeneration=false; }
 }
 function renderPause(){
+  if(publicReader){$('#pauseRefill').textContent='暂停／恢复补充';$('#generateBtn').disabled=false;$('#generationStatus').textContent='补充和暂停将在专属控制页操作';return;}
   $('#pauseRefill').textContent=user.refill_paused?'恢复补充':'暂停补充';
   $('#pauseRefill').setAttribute('aria-pressed',String(user.refill_paused));
   $('#generateBtn').disabled=user.refill_paused;
 }
 $('#pauseRefill').addEventListener('click',async()=>{
+  if(publicReader){openControl('toggle');return;}
   const button=$('#pauseRefill');
   button.disabled=true;
   try{
